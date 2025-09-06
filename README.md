@@ -29,8 +29,7 @@ pnpm db:setup
 Then, run the database migrations and seed the database:
 
 ```bash
-pnpm db:migrate
-pnpm db:seed
+pnpm db:migrate # automatically seeds, if not, run pnpm db:seed
 ```
 
 Finally, run the Next.js development server:
