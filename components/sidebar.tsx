@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { Building2, LogOut, Plus, Mic, Clock, CheckCircle, Loader2 } from "lucide-react"
+import { Building2, LogOut, Plus, Clock, CheckCircle, Loader2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FuturisticAudioInputPanel } from '@/components/audio-input-panel';
 
 interface Recording {
   id: number
@@ -48,6 +49,18 @@ interface Organization {
   recordingCount: number
 }
 
+interface AudioData {
+  file: File
+  url: string
+  duration: number
+  size: string
+  id: string
+  name: string
+  uploadedAt: Date
+  type: 'recording' | 'upload'
+  storageUrl?: string
+}
+
 interface SidebarProps {
   user: {
     name: string
@@ -56,7 +69,7 @@ interface SidebarProps {
   }
   organizations: Organization[]
   recordings: Recording[]
-  onCreateRecording?: (name: string, organizationId: number) => Promise<void>
+  onCreateRecording?: (name: string, organizationId: number, audioData?: AudioData) => Promise<void>
 }
 
 export default function Sidebar({ user, organizations, recordings, onCreateRecording }: SidebarProps) {
@@ -65,6 +78,8 @@ export default function Sidebar({ user, organizations, recordings, onCreateRecor
   const [selectedOrg, setSelectedOrg] = useState(organizations[0]?.id || null)
   const [recordingName, setRecordingName] = useState("")
   const [isCreating, setIsCreating] = useState(false)
+  const [audioData, setAudioData] = useState<AudioData | null>(null)
+  const [currentStep, setCurrentStep] = useState<'audio' | 'details'>('audio')
   const { toast } = useToast()
   const router = useRouter()
 
@@ -94,6 +109,46 @@ export default function Sidebar({ user, organizations, recordings, onCreateRecor
     setShowProfileMenu(false)
   }
 
+  const handleAudioChange = (data: AudioData) => {
+    setAudioData(data)
+    // Auto-generate a name from the file if not already set
+    if (!recordingName && data.name) {
+      const baseName = data.name.replace(/\.(mp3|webm|wav)$/i, '')
+      setRecordingName(baseName)
+    }
+    // Move to details step after audio is captured
+    setCurrentStep('details')
+  }
+
+  const handleAudioAnalyze = async (data: AudioData) => {
+    // If analysis is triggered directly, create recording with analyzed flag
+    if (!recordingName.trim()) {
+      const baseName = data.name.replace(/\.(mp3|webm|wav)$/i, '')
+      setRecordingName(`${baseName} - Analysis`)
+    }
+
+    setIsCreating(true)
+    try {
+      if (onCreateRecording && selectedOrg !== null) {
+        await onCreateRecording(recordingName || data.name, selectedOrg, data)
+        toast({
+          title: "Recording created",
+          description: "Your audio is being analyzed. Check back soon for results.",
+        })
+        resetForm()
+        router.refresh()
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create recording",
+        variant: "destructive",
+      })
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
   const handleCreateRecording = async () => {
     if (!recordingName.trim() || !selectedOrg) return
 
@@ -108,13 +163,14 @@ export default function Sidebar({ user, organizations, recordings, onCreateRecor
 
     setIsCreating(true)
     try {
-      await onCreateRecording(recordingName, selectedOrg)
+      await onCreateRecording(recordingName, selectedOrg, audioData || undefined)
       toast({
         title: "Recording created",
-        description: "Your new recording has been created and queued for processing.",
+        description: audioData
+          ? "Your recording with audio has been created and queued for processing."
+          : "Your new recording has been created and queued for processing.",
       })
-      setShowNewRecording(false)
-      setRecordingName("")
+      resetForm()
       router.refresh()
     } catch (error) {
       toast({
@@ -125,6 +181,13 @@ export default function Sidebar({ user, organizations, recordings, onCreateRecor
     } finally {
       setIsCreating(false)
     }
+  }
+
+  const resetForm = () => {
+    setShowNewRecording(false)
+    setRecordingName("")
+    setAudioData(null)
+    setCurrentStep('audio')
   }
 
   const getStateIcon = (state: Recording["state"]) => {
@@ -170,62 +233,116 @@ export default function Sidebar({ user, organizations, recordings, onCreateRecor
       {/* New Recording Button - Only show if handler is provided */}
       {onCreateRecording && (
         <div className="p-4">
-          <Dialog open={showNewRecording} onOpenChange={setShowNewRecording}>
+          <Dialog open={showNewRecording} onOpenChange={(open) => {
+            setShowNewRecording(open)
+            if (!open) resetForm()
+          }}>
             <DialogTrigger asChild>
               <Button className="w-full justify-start gap-2" style={{ backgroundColor: "#C3F73A", color: "#01172F" }}>
                 <Plus className="h-4 w-4" />
                 New Recording
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create New Recording</DialogTitle>
-                <DialogDescription>Start a new recording session for your organization.</DialogDescription>
+                <DialogDescription>
+                  {currentStep === 'audio'
+                    ? "Upload an MP3 file or record audio directly from your microphone"
+                    : "Provide details for your recording"}
+                </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Recording Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="e.g., Team Meeting Q1 2024"
-                    value={recordingName}
-                    onChange={(e) => setRecordingName(e.target.value)}
+
+              {currentStep === 'audio' ? (
+                <div className="py-4">
+                  <FuturisticAudioInputPanel
+                    onChange={handleAudioChange}
+                    onAnalyze={handleAudioAnalyze}
+                    onShare={(data) => {
+                      toast({
+                        title: "Share feature",
+                        description: "Audio sharing will be available soon",
+                      })
+                    }}
+                    onSave={(data) => {
+                      toast({
+                        title: "Audio saved",
+                        description: "Your audio has been saved to the recording",
+                      })
+                    }}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="org">Organization</Label>
-                  <select
-                    id="org"
-                    className="w-full rounded-md border border-gray-300 p-2"
-                    value={selectedOrg || ""}
-                    onChange={(e) => setSelectedOrg(Number.parseInt(e.target.value))}
-                  >
-                    {organizations.map((org) => (
-                      <option key={org.id} value={org.id}>
-                        {org.name} {org.isPersonal && "(Personal)"}
-                      </option>
-                    ))}
-                  </select>
+              ) : (
+                <div className="space-y-4 pt-4">
+                  {audioData && (
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-600 mb-1">Audio attached:</p>
+                      <p className="font-medium">{audioData.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {audioData.type === 'recording' ? 'Recorded' : 'Uploaded'} •
+                        Duration: {Math.round(audioData.duration)}s
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Recording Name</Label>
+                    <Input
+                      id="name"
+                      placeholder="e.g., Beethoven Sonata Practice"
+                      value={recordingName}
+                      onChange={(e) => setRecordingName(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="org">Organization</Label>
+                    <select
+                      id="org"
+                      className="w-full rounded-md border border-gray-300 p-2"
+                      value={selectedOrg || ""}
+                      onChange={(e) => setSelectedOrg(Number.parseInt(e.target.value))}
+                    >
+                      {organizations.map((org) => (
+                        <option key={org.id} value={org.id}>
+                          {org.name} {org.isPersonal && "(Personal)"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex gap-2 justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentStep('audio')}
+                    >
+                      Back to Audio
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={resetForm}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleCreateRecording}
+                      disabled={!recordingName.trim() || !selectedOrg || isCreating}
+                      style={{ backgroundColor: "#01172F", color: "white" }}
+                    >
+                      {isCreating ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          Create Recording
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2 justify-end">
-                  <Button variant="outline" onClick={() => setShowNewRecording(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleCreateRecording} disabled={!recordingName.trim() || !selectedOrg || isCreating}>
-                    {isCreating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        <Mic className="mr-2 h-4 w-4" />
-                        Create Recording
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
+              )}
             </DialogContent>
           </Dialog>
         </div>
