@@ -6,15 +6,15 @@ const nextConfig: NextConfig = {
     dynamicIO: true,
     serverSourceMaps: true,
   },
-  async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/f/inbox',
-        permanent: false,
-      },
-    ];
-  },
+  // async redirects() {
+  //   return [
+  //     {
+  //       source: '/',
+  //       destination: '/f/inbox',
+  //       permanent: false,
+  //     },
+  //   ];
+  // },
 };
 
 export default nextConfig;
