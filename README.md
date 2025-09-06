@@ -1,13 +1,6 @@
-# Next.js Email Client
+# CrescendAI
 
-This is an email client template built with Next.js and Postgres. It's built to show off some of the features of the App Router, which enable you to build products that:
-
-- Navigate between routes in a column layout while maintaining scroll position (layouts support)
-- Submit forms without JavaScript enabled (progressive enhancement)
-- Navigate between routes extremely fast (prefetching and caching)
-- Retain your UI position on reload (URL state)
-
-**Demo: https://next-email-client.vercel.app**
+A piano learning web app that provides intelligent feedback on recordings based on 19 feedback dimensions. Built with the percepiano dataset, a novel dataset for evaluating piano performance based on expert-guided annotations.
 
 ## Tech Stack
 
@@ -20,8 +13,8 @@ This is an email client template built with Next.js and Postgres. It's built to 
 ## Getting Started
 
 ```bash
-git clone https://github.com/leerob/next-email-client
-cd next-email-client
+git clone <your-repo-url>
+cd crescendai-web
 pnpm install
 ```
 
@@ -33,7 +26,7 @@ Use the included setup script to create your `.env` file:
 pnpm db:setup
 ```
 
-Then, run the database migrations and seed the database with emails and folders:
+Then, run the database migrations and seed the database:
 
 ```bash
 pnpm db:migrate
@@ -46,22 +39,13 @@ Finally, run the Next.js development server:
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
+Open [http://localhost:3000](http://localhost:3000) in your browser to see the app.
 
-## Implemented
+## Features (Coming Soon)
 
-- ✅ Search for emails
-- ✅ Profile sidebar with user information
-- ✅ View all threads
-- ✅ View all emails in a thread
-- ✅ Compose view
-- ✅ Seed and setup script
-- ✅ Highlight searched text
-- ✅ Hook up compose view
-- ✅ Delete emails (move to trash)
-- Make side profile dynamic
-- Support Markdown?
-- Make up/down arrows work for threads
-- Global keyboard shortcuts
-- Better date formatting
-- Dark mode styles
+- Piano recording upload and analysis
+- AI-powered feedback based on 19 dimensions
+- Performance scoring and recommendations
+- Progress tracking
+- Dark mode
+- User authentication
