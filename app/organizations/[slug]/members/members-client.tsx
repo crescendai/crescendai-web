@@ -301,22 +301,6 @@ export default function MembersClient({
 
         {/* Main Content */}
         <div className="flex-1 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Members of {organization.name}</h1>
-            <Button
-              variant="outline"
-              onClick={() => {
-                toast({
-                  title: "Export not implemented",
-                  description: "Member export functionality coming soon.",
-                })
-              }}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
-          </div>
-
           {/* Search and Filters */}
           <div className="flex items-center gap-4 mb-6">
             <div className="relative flex-1 max-w-md">
