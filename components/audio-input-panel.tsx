@@ -690,7 +690,7 @@ export function FuturisticAudioInputPanel({ onChange, onShare, onAnalyze, onSave
     <TooltipProvider>
       <div className="w-full max-w-4xl mx-auto">
         <Tabs defaultValue="upload" className="w-full">
-          {/*<TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-xl shadow-sm border border-gray-300">
+          <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-xl shadow-sm border border-gray-300">
             <TabsTrigger
               value="upload"
               className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-black font-medium transition-all duration-300 text-gray-600"
@@ -705,7 +705,7 @@ export function FuturisticAudioInputPanel({ onChange, onShare, onAnalyze, onSave
               <Mic className="h-4 w-4 mr-2" />
               Record Audio
             </TabsTrigger>
-          </TabsList>*/}
+          </TabsList>
 
           <TabsContent value="upload" className="space-y-8 mt-8">
             {!uploadedAudio ? (

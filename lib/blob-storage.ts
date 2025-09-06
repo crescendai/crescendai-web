@@ -145,30 +145,6 @@ export function generateShareLink(storageUrl: string, audioId: string): string {
 }
 
 /**
- * Generate a presigned URL for secure access (expires in 1 hour by default)
- */
-export async function generatePresignedUrl(key: string, expiresIn: number = 3600): Promise<string> {
-  try {
-    const params = new URLSearchParams({
-      key,
-      expiresIn: expiresIn.toString(),
-    })
-
-    const response = await fetch(`/api/audio/presigned-url?${params}`)
-    const result: ApiResponse<PresignedUrlData> = await response.json()
-
-    if (!response.ok || !result.success) {
-      throw new Error(result.error || `Failed to generate presigned URL`)
-    }
-
-    return result.data!.presignedUrl
-  } catch (error) {
-    console.error('Error generating presigned URL:', error)
-    throw new Error(`Failed to generate presigned URL: ${error instanceof Error ? error.message : 'Unknown error'}`)
-  }
-}
-
-/**
  * Delete an audio file from blob storage
  */
 export async function deleteAudioFromBlob(key: string): Promise<void> {
