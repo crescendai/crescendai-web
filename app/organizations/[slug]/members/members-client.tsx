@@ -150,7 +150,7 @@ export default function MembersClient({
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to invite member. Please try again.",
+        description: "Failed to Add Member. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -276,7 +276,7 @@ export default function MembersClient({
                 onClick={() => setShowInviteDialog(true)}
               >
                 <UserPlus className="w-4 h-4 mr-2" />
-                Invite Member
+                Add Member
               </Button>
             </div>
           )}
@@ -449,11 +449,11 @@ export default function MembersClient({
         </div>
       </div>
 
-      {/* Invite Member Dialog */}
+      {/* Add Member Dialog */}
       <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Invite Member to {organization.name}</DialogTitle>
+            <DialogTitle>Add Member to {organization.name}</DialogTitle>
             <DialogDescription>
               Send an invitation to a new member to join your organization.
             </DialogDescription>

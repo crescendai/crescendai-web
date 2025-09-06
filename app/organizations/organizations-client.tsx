@@ -142,7 +142,7 @@ export default function OrganizationsClient({ user, organizations, recordings }:
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to invite member. Please try again.",
+        description: "Failed to Add Member. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -298,7 +298,7 @@ export default function OrganizationsClient({ user, organizations, recordings }:
                           <>
                             <DropdownMenuItem onClick={() => setShowInviteMember(org.id)} className="cursor-pointer">
                               <UserPlus className="h-4 w-4 mr-2" />
-                              Invite Member
+                              Add Member
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleDeleteOrganization(org.id, org.name)}
@@ -341,11 +341,11 @@ export default function OrganizationsClient({ user, organizations, recordings }:
         </div>
       </div>
 
-      {/* Invite Member Dialog */}
+      {/* Add Member Dialog */}
       <Dialog open={showInviteMember !== null} onOpenChange={() => setShowInviteMember(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Invite Member</DialogTitle>
+            <DialogTitle>Add Member</DialogTitle>
             <DialogDescription>
               Invite a new member to join your organization.
             </DialogDescription>

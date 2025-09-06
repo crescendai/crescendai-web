@@ -178,7 +178,7 @@ export async function inviteMemberAction(_: any, formData: FormData) {
       return { error: error.errors[0].message, previous: rawFormData };
     }
     return {
-      error: error instanceof Error ? error.message : 'Failed to invite member',
+      error: error instanceof Error ? error.message : 'Failed to Add Member',
       previous: rawFormData,
     };
   }
