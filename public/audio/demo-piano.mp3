@@ -1,0 +1,4 @@
+# This is a placeholder file for development
+# In production, this would be a real piano audio file
+# The audio player will show an error if this file doesn't work
+# but the timeline and other components will still function

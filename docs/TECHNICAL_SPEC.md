@@ -57,17 +57,6 @@ app/
 
 #### Database Schema Updates
 ```sql
--- Recordings table
-CREATE TABLE recordings (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER REFERENCES users(id),
-  title VARCHAR(255) NOT NULL,
-  audio_url VARCHAR(255) NOT NULL,
-  duration INTEGER NOT NULL, -- Duration in seconds
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-
 -- Feedback markers table
 CREATE TABLE feedback_markers (
   id SERIAL PRIMARY KEY,
@@ -88,16 +77,6 @@ ON feedback_markers(recording_id, timestamp);
 #### Drizzle Schema Definition
 ```typescript
 // lib/db/schema.ts additions
-export const recordings = pgTable('recordings', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id),
-  title: varchar('title', { length: 255 }).notNull(),
-  audioUrl: varchar('audio_url', { length: 255 }).notNull(),
-  duration: integer('duration').notNull(),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
 export const feedbackMarkers = pgTable(
   'feedback_markers',
   {

@@ -10,6 +10,7 @@ import {
   varchar,
   pgEnum,
   boolean,
+  decimal,
 } from 'drizzle-orm/pg-core';
 
 // Enums
@@ -173,8 +174,31 @@ export const recordingResults = pgTable(
   {
     id: serial('id').primaryKey(),
     result: text('result').notNull(), // Base64 encoded string
+    audioUrl: varchar('audio_url', { length: 255 }), // URL to audio file
     createdAt: timestamp('created_at').defaultNow().notNull(),
   }
+);
+
+// Feedback markers table for timeline feedback
+export const feedbackMarkers = pgTable(
+  'feedback_markers',
+  {
+    id: serial('id').primaryKey(),
+    recordingId: integer('recording_id').references(() => recordings.id, { onDelete: 'cascade' }).notNull(),
+    timestamp: integer('timestamp').notNull(), // Timestamp in seconds
+    dimension: varchar('dimension', { length: 100 }).notNull(), // One of 19 feedback dimensions
+    score: decimal('score', { precision: 3, scale: 2 }).notNull(), // Score between -1.0 and 1.0
+    feedbackText: text('feedback_text').notNull(),
+    severity: varchar('severity', { length: 20 }).notNull(), // 'positive', 'neutral', 'negative'
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    recordingIdIndex: index('feedback_markers_recording_id_idx').on(table.recordingId),
+    recordingTimestampIdx: index('feedback_markers_recording_timestamp_idx').on(
+      table.recordingId,
+      table.timestamp
+    ),
+  })
 );
 
 // Relations
@@ -221,7 +245,7 @@ export const organizationMembersRelations = relations(organizationMembers, ({ on
   }),
 }));
 
-export const recordingsRelations = relations(recordings, ({ one }) => ({
+export const recordingsRelations = relations(recordings, ({ one, many }) => ({
   organization: one(organizations, {
     fields: [recordings.organizationId],
     references: [organizations.id],
@@ -234,8 +258,16 @@ export const recordingsRelations = relations(recordings, ({ one }) => ({
     fields: [recordings.resultId],
     references: [recordingResults.id],
   }),
+  feedbackMarkers: many(feedbackMarkers),
 }));
 
 export const recordingResultsRelations = relations(recordingResults, ({ many }) => ({
   recordings: many(recordings),
+}));
+
+export const feedbackMarkersRelations = relations(feedbackMarkers, ({ one }) => ({
+  recording: one(recordings, {
+    fields: [feedbackMarkers.recordingId],
+    references: [recordings.id],
+  }),
 }));

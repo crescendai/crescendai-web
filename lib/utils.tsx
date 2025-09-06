@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import React from 'react';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -40,4 +41,15 @@ export function highlightText(text: string, query: string | undefined) {
       part
     ),
   );
+}
+
+/**
+ * Formats a duration in seconds to a MM:SS format
+ * @param seconds - Duration in seconds
+ * @returns Formatted duration string (e.g., "3:45")
+ */
+export function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
