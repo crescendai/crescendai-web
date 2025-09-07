@@ -31,7 +31,7 @@ export default function SignInPage() {
           <h1 className="text-7xl font-bold text-white mb-6 tracking-tight">CrescendAI</h1>
           <div className="w-24 h-1 mx-auto mb-6" style={{ backgroundColor: "#C3F73A" }} />
           <p className="text-xl text-white/90 max-w-md leading-relaxed">
-            lolol llolololololloo lo lol ol o lo lo l ol ol o lo l olol
+            Better than your shitty piano teacher.
           </p>
         </div>
       </div>

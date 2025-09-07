@@ -33,6 +33,18 @@ interface Organization {
   recordingCount: number
 }
 
+interface AudioData {
+  file: File
+  url: string
+  duration: number
+  size: string
+  id: string
+  name: string
+  uploadedAt: Date
+  type: 'recording' | 'upload'
+  storageUrl?: string
+}
+
 interface DashboardClientProps {
   user: {
     name: string
@@ -46,10 +58,17 @@ interface DashboardClientProps {
 export default function DashboardClient({ user, organizations, recordings }: DashboardClientProps) {
   const { toast } = useToast()
 
-  const handleCreateRecording = async (name: string, organizationId: number) => {
+  const handleCreateRecording = async (name: string, organizationId: number, audioData?: AudioData) => {
     const formData = new FormData()
     formData.append("name", name)
     formData.append("organizationId", organizationId.toString())
+
+    // If audio data is provided, include it in the request
+    if (audioData?.storageUrl) {
+      formData.append("audioUrl", audioData.storageUrl)
+      // Always analyze when audio is provided
+      formData.append("shouldAnalyze", "true")
+    }
 
     const result = await createRecordingAction(null, formData)
     if (result?.error) {
@@ -101,12 +120,12 @@ export default function DashboardClient({ user, organizations, recordings }: Das
             {recordings.length === 0 ? (
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-black mb-4">Welcome to CrescendAI</h2>
-                <p className="text-gray-600 mb-6">Create your first recording to get started</p>
+                <p className="text-gray-600 mb-6">Upload or record your piano performance to get started</p>
                 <Button
                   onClick={() => {
                     toast({
-                      title: "Tip",
-                      description: "Use the 'New Recording' button in the sidebar to create a recording",
+                      title: "Get Started",
+                      description: "Use the 'New Recording' button in the sidebar to upload or record audio",
                     })
                   }}
                   style={{ backgroundColor: "#C3F73A", color: "#01172F" }}

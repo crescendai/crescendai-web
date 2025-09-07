@@ -170,7 +170,7 @@ export default function PaperShaderPage() {
         <div className="text-center font-mono mb-12">
           <h1 className="text-4xl md:text-6xl font-bold text-white/90 mb-4 tracking-wider">CrescendAI</h1>
           <p className="text-lg md:text-xl text-white/60 mb-2">Where AI meets musical mastery</p>
-          <p className="text-sm text-white/40">Transforming piano performance through intelligent analysis</p>
+          <p className="text-sm text-white/40">Better than your shitty piano teacher.</p>
         </div>
 
         <div className="relative mb-8 pointer-events-auto">

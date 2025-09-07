@@ -15,6 +15,7 @@ import {
 } from './schema';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { processPianoAnalysis } from '@/lib/piano-analysis';
 
 // Organization schemas
 const createOrganizationSchema = z.object({
@@ -33,6 +34,8 @@ const inviteMemberSchema = z.object({
 const createRecordingSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255),
   organizationId: z.number(),
+  audioUrl: z.string().optional(), // Storage URL for the audio file
+  shouldAnalyze: z.boolean().optional().default(false),
 });
 
 const updateRecordingStateSchema = z.object({
@@ -121,6 +124,78 @@ export async function createOrganizationAction(_: any, formData: FormData) {
 
   revalidatePath('/organizations');
   redirect(`/organizations/${newOrg.slug}`);
+}
+
+export async function createRecordingAction(_: any, formData: FormData) {
+  let newRecording;
+  const rawFormData = {
+    name: formData.get('name'),
+    organizationId: parseInt(formData.get('organizationId') as string),
+    audioUrl: formData.get('audioUrl'),
+    shouldAnalyze: formData.get('shouldAnalyze') === 'true',
+  };
+
+  try {
+    const user = await getCurrentUser();
+    const validatedFields = createRecordingSchema.parse(rawFormData);
+
+    // Check membership
+    await checkOrgMembership(user.id, validatedFields.organizationId);
+
+    // Create recording with audio URL if provided
+    [newRecording] = await db
+      .insert(recordings)
+      .values({
+        name: validatedFields.name,
+        organizationId: validatedFields.organizationId,
+        createdBy: user.id,
+        audioUrl: rawFormData.audioUrl,
+        state: 'queued',
+        // Store the audio URL in the name field or add a new field to your schema
+        // You might want to add an audioUrl field to your recordings table
+      })
+      .returning();
+
+    // If audio was uploaded and analysis is requested, trigger piano analysis
+    if (validatedFields.audioUrl && validatedFields.shouldAnalyze) {
+      // Trigger analysis asynchronously
+      processPianoAnalysisAsync(newRecording.id, validatedFields.audioUrl);
+    }
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { error: error.errors[0].message, previous: rawFormData };
+    }
+    return {
+      error: error instanceof Error ? error.message : 'Failed to create recording',
+      previous: rawFormData,
+    };
+  }
+
+  revalidatePath('/recordings');
+  redirect(`/recordings/${newRecording.id}`);
+}
+
+// Async function to process piano analysis without blocking
+async function processPianoAnalysisAsync(recordingId: number, audioUrl: string) {
+  try {
+    // Call the piano analysis function
+    await processPianoAnalysis(recordingId, audioUrl);
+
+    // Optionally send a notification or update UI
+    console.log(`Piano analysis completed for recording ${recordingId}`);
+  } catch (error) {
+    console.error(`Piano analysis failed for recording ${recordingId}:`, error);
+
+    // Update recording state to indicate analysis failed
+    await db
+      .update(recordings)
+      .set({
+        state: 'queued', // Reset to queued so it can be retried
+        updatedAt: new Date(),
+      })
+      .where(eq(recordings.id, recordingId));
+  }
 }
 
 export async function inviteMemberAction(_: any, formData: FormData) {
@@ -220,46 +295,6 @@ export async function removeMemberAction(_: any, formData: FormData) {
       error: error instanceof Error ? error.message : 'Failed to remove member',
     };
   }
-}
-
-// Recording actions
-export async function createRecordingAction(_: any, formData: FormData) {
-  let newRecording;
-  const rawFormData = {
-    name: formData.get('name'),
-    organizationId: parseInt(formData.get('organizationId') as string),
-  };
-
-  try {
-    const user = await getCurrentUser();
-    const validatedFields = createRecordingSchema.parse(rawFormData);
-
-    // Check membership
-    await checkOrgMembership(user.id, validatedFields.organizationId);
-
-    // Create recording
-    [newRecording] = await db
-      .insert(recordings)
-      .values({
-        name: validatedFields.name,
-        organizationId: validatedFields.organizationId,
-        createdBy: user.id,
-        state: 'queued',
-      })
-      .returning();
-
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { error: error.errors[0].message, previous: rawFormData };
-    }
-    return {
-      error: error instanceof Error ? error.message : 'Failed to create recording',
-      previous: rawFormData,
-    };
-  }
-
-  revalidatePath('/recordings');
-  redirect(`/recordings/${newRecording.id}`);
 }
 
 export async function updateRecordingStateAction(_: any, formData: FormData) {

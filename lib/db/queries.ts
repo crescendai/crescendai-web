@@ -142,6 +142,7 @@ export async function getOrganizationRecordings(organizationId: number, userId?:
       state: recordings.state,
       createdAt: recordings.createdAt,
       updatedAt: recordings.updatedAt,
+      audioUrl: recordings.audioUrl,
       hasResult: sql<boolean>`${recordings.resultId} IS NOT NULL`,
       createdBy: {
         id: users.id,

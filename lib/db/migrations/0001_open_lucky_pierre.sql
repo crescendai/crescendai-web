@@ -1,0 +1,1 @@
+ALTER TABLE "recordings" ADD COLUMN "audioUrl" varchar(1000) NOT NULL;

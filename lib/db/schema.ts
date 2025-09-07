@@ -150,6 +150,7 @@ export const recordings = pgTable(
   {
     id: serial('id').primaryKey(),
     name: varchar('name', { length: 255 }).notNull(),
+    audioUrl: varchar('audioUrl', { length: 1000 }).notNull(),
     state: recordingStateEnum('state').default('queued').notNull(),
     organizationId: integer('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
     createdBy: integer('created_by').references(() => users.id).notNull(),

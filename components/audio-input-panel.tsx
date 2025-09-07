@@ -57,6 +57,48 @@ interface AudioInfo {
   size: string
 }
 
+// Function to convert WebM to MP3 using the API endpoint
+const convertWebmToMp3 = async (webmBlob: Blob, originalFilename: string): Promise<{ file: File; url: string; duration: number }> => {
+  const formData = new FormData()
+  const webmFile = new File([webmBlob], originalFilename, { type: 'audio/webm' })
+  formData.append('file', webmFile)
+
+  const response = await fetch('/api/audio/snowflake', {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+    throw new Error(errorData.error || `Conversion failed with status ${response.status}`)
+  }
+
+  // Get the MP3 blob from the response
+  const mp3Blob = await response.blob()
+
+  // Create MP3 file with proper naming
+  const mp3Filename = originalFilename.replace('.webm', '.mp3')
+  const mp3File = new File([mp3Blob], mp3Filename, { type: 'audio/mpeg' })
+  const mp3Url = URL.createObjectURL(mp3Blob)
+
+  // Get duration from the MP3 file
+  const duration = await new Promise<number>((resolve) => {
+    const audio = new Audio()
+    audio.onloadedmetadata = () => {
+      resolve(audio.duration)
+      URL.revokeObjectURL(audio.src)
+    }
+    audio.onerror = () => resolve(0)
+    audio.src = mp3Url
+  })
+
+  return {
+    file: mp3File,
+    url: mp3Url,
+    duration
+  }
+}
+
 // Simple Button Component
 const SimpleButton = ({
                         isPressed,
@@ -240,7 +282,7 @@ export function FuturisticAudioInputPanel({ onChange, onShare, onAnalyze, onSave
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
-  const [processingStage, setProcessingStage] = useState<'uploading' | 'analyzing' | 'processing' | 'complete'>('uploading')
+  const [processingStage, setProcessingStage] = useState<'uploading' | 'analyzing' | 'processing' | 'converting' | 'complete'>('uploading')
   const [processingProgress, setProcessingProgress] = useState(0)
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -482,21 +524,33 @@ export function FuturisticAudioInputPanel({ onChange, onShare, onAnalyze, onSave
       mediaRecorder.onstop = async () => {
         setIsProcessing(true)
 
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" })
-        const filename = `crescend-recording-${Date.now()}.webm`
+        const webmBlob = new Blob(audioChunksRef.current, { type: "audio/webm" })
+        const webmFilename = `crescend-recording-${Date.now()}.webm`
 
         try {
-          // Upload to object storage
-          const storageUrl = await uploadRecordingToStorage(audioBlob, filename)
+          // Convert WebM to MP3
+          setProcessingStage('converting')
+          setProcessingProgress(0)
 
-          const file = new File([audioBlob], filename, { type: "audio/webm" })
-          const url = URL.createObjectURL(audioBlob)
+          // Simulate conversion progress
+          const conversionProgressInterval = setInterval(() => {
+            setProcessingProgress(prev => Math.min(prev + 5, 80))
+          }, 100)
+
+          const { file: mp3File, url: mp3Url, duration } = await convertWebmToMp3(webmBlob, webmFilename)
+
+          clearInterval(conversionProgressInterval)
+          setProcessingProgress(90)
+
+          // Upload the converted MP3 to object storage
+          setProcessingStage('uploading')
+          const storageUrl = await uploadRecordingToStorage(mp3File, mp3File.name)
 
           const audioInfo: AudioInfo = {
-            file,
-            url,
-            duration: recordingTime,
-            size: formatFileSize(audioBlob.size),
+            file: mp3File,
+            url: mp3Url,
+            duration: duration,
+            size: formatFileSize(mp3File.size),
           }
 
           setRecordedAudio(audioInfo)
@@ -504,8 +558,8 @@ export function FuturisticAudioInputPanel({ onChange, onShare, onAnalyze, onSave
           const audioData = createAudioData(audioInfo, 'recording', storageUrl)
           onChange?.(audioData)
         } catch (error) {
-          console.error('Failed to save recording:', error)
-          setRecordError('Failed to save recording. Please try again.')
+          console.error('Failed to convert and save recording:', error)
+          setRecordError(`Failed to convert recording to MP3: ${error instanceof Error ? error.message : 'Unknown error'}`)
         }
 
         if (animationFrameRef.current) {
@@ -919,7 +973,7 @@ export function FuturisticAudioInputPanel({ onChange, onShare, onAnalyze, onSave
                     </p>
                     <div className="flex items-center justify-center space-x-3 text-sm text-gray-500">
                       <Music className="h-4 w-4 text-black" />
-                      <span>Maximum 30 seconds • Studio quality • Piano optimized</span>
+                      <span>Maximum 30 seconds • Studio quality • Converts to MP3</span>
                     </div>
                   </div>
                 </div>

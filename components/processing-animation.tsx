@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 
 interface ProcessingAnimationProps {
   isVisible: boolean
-  stage: 'uploading' | 'analyzing' | 'processing' | 'complete'
+  stage: 'uploading' | 'analyzing' | 'processing' | 'complete' | 'converting'
   progress?: number
   message?: string
   onComplete?: () => void
