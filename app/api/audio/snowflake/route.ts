@@ -143,21 +143,6 @@ export async function POST(request: { formData: () => any; }) {
     );
   }
 }
-
-// For Pages Router (alternative implementation)
-export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  // Similar implementation as above but using req/res instead of NextRequest/NextResponse
-  // You would need to use a library like 'multiparty' or 'formidable' to parse form data
-
-  res.status(501).json({
-    error: 'Use the App Router version above for full functionality'
-  });
-}
-
 // Type definitions for better type safety
 interface ConversionError extends Error {
   code?: number;
