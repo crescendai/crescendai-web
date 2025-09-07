@@ -1,5 +1,5 @@
-# CrescendAI
-Everything related to Web infra.
+# CrescendAI Web
+CrescendAI is an AI piano tutor. This repository hosts everything related to CrescendAI's website.
 
 ## Running Locally
 
