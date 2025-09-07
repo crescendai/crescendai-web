@@ -60,7 +60,7 @@ async function cleanup(...filePaths: string[]) {
   }
 }
 
-export async function POST(request: { formData: () => any; }) {
+export async function POST(request: NextRequest) {
   let inputPath = '';
   let outputPath = '';
 
@@ -91,8 +91,11 @@ export async function POST(request: { formData: () => any; }) {
       );
     }
 
+
+
+
     // Validate file type
-    if (!file.type.includes('webm')) {
+    if (!(file as File).type.includes('webm')) {
       return NextResponse.json(
         { error: 'File must be WebM format' },
         { status: 400 }
@@ -108,7 +111,7 @@ export async function POST(request: { formData: () => any; }) {
     outputPath = path.join(TEMP_DIR, outputFilename);
 
     // Convert file to buffer and save to temp directory
-    const bytes = await file.arrayBuffer();
+    const bytes = await (file as File).arrayBuffer();
     const buffer = Buffer.from(bytes);
     await writeFile(inputPath, buffer);
 
@@ -126,7 +129,7 @@ export async function POST(request: { formData: () => any; }) {
       status: 200,
       headers: {
         'Content-Type': 'audio/mpeg',
-        'Content-Disposition': `attachment; filename="${file.name.replace('.webm', '.mp3')}"`,
+        'Content-Disposition': `attachment; filename="${(file as File).name.replace('.webm', '.mp3')}"`,
       },
     });
 
